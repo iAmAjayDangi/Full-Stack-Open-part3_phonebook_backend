@@ -19,29 +19,6 @@ morgan.token('body', (request, response) =>{
 
 app.use(morgan(':method :url :status :res[content-length] - :response-time ms :body'))
 
-let persons = [
-    { 
-      "id": 1,
-      "name": "Arto Hellas", 
-      "number": "040-123456"
-    },
-    { 
-      "id": 2,
-      "name": "Ada Lovelace", 
-      "number": "39-44-5323523"
-    },
-    { 
-      "id": 3,
-      "name": "Dan Abramov", 
-      "number": "12-43-234345"
-    },
-    { 
-      "id": 4,
-      "name": "Mary Poppendieck", 
-      "number": "39-23-6423122"
-    }
-]
-
 app.get('/api/persons', (request, response)=>{
     Person.find({}).then(result =>{
         response.json(result)
@@ -49,9 +26,7 @@ app.get('/api/persons', (request, response)=>{
 })
 
 app.get('/api/persons/:id', (request, response)=>{
-    // const id = Number(request.params.id)
-    // const person = persons.find(p => p.id === id)
-
+    
     Person.findById(request.params.id).then(person =>{
         if(person){
             response.json(person)
@@ -68,21 +43,22 @@ app.get('/api/persons/:id', (request, response)=>{
 
 app.get('/info', (request, response)=>{
     const time = new Date()
-    response.send(`<p>Phonebook has info for ${persons.length} people</p><p>${time}</p>`)
+
+    Person.count({}).then(count =>{
+        response.send(`<p>Phonebook has info for ${count} people</p><p>${time}</p>`)
+    })
 })
 
 app.delete('/api/persons/:id', (request, response)=>{
-    const id = Number(request.params.id)
-    persons = persons.filter(person => person.id !== id)
-
-    response.status(204).end()
+    Person.findByIdAndRemove(request.params.id).then(result =>{
+        response.status(204).end()
+    }).catch(error =>{
+        console.log(error)
+        response.status(400).send({error: 'malformatted id'})
+    })
 
 })
 
-const generateId = () =>{
-    const generatedId = (Math.floor(Math.random()*20000000))%10000000
-    return generatedId
-}
 
 const personExists = (name) =>{
     const person = persons.find(person => person.name === name)
@@ -101,11 +77,11 @@ app.post('/api/persons', (request, response) =>{
         })
     }
 
-    if(personExists(body.name)){
-        return response.status(400).json({
-            error: 'name must be unique'
-        })
-    }
+    // if(personExists(body.name)){
+    //     return response.status(400).json({
+    //         error: 'name must be unique'
+    //     })
+    // }
 
     const person = new Person({
         name: body.name,
