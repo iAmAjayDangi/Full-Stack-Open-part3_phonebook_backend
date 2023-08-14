@@ -49,15 +49,20 @@ app.get('/api/persons', (request, response)=>{
 })
 
 app.get('/api/persons/:id', (request, response)=>{
-    const id = Number(request.params.id)
-    const person = persons.find(p => p.id === id)
+    // const id = Number(request.params.id)
+    // const person = persons.find(p => p.id === id)
 
-    if(person){
-        response.json(person)
-    }
-    else{
-        response.status(404).end()
-    }
+    Person.findById(request.params.id).then(person =>{
+        if(person){
+            response.json(person)
+        }
+        else{
+            response.status(404).end()
+        }
+    }).catch(error =>{
+        console.log(error)
+        response.status(400).send({error: 'malformatted id'})
+    })
 
 })
 
